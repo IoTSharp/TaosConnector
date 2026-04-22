@@ -494,7 +494,7 @@ namespace IoTSharp.Data.Taos
             TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
             EnsureConnectionOpen();
-            var lines = array.Select(x => x?.ToString() ?? "null").ToArray();
+            var lines = array.Where(x => x != null).Select(x => x!.ToString()).ToArray();
             return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
         }
 
