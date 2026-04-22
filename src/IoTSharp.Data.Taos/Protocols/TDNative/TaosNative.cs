@@ -18,6 +18,7 @@ namespace IoTSharp.Data.Taos.Protocols
     {
         private static readonly ConcurrentDictionary<string, ConcurrentTaosQueue> g_pool = new ConcurrentDictionary<string, ConcurrentTaosQueue>();
         private ConcurrentTaosQueue _queue = null;
+        private static readonly object _init_lock = new object();
         private static bool _dll_isloaded = false;
         private static bool _resolver_registered = false;
         private static string _nativeLibraryPath = string.Empty;
@@ -39,30 +40,34 @@ namespace IoTSharp.Data.Taos.Protocols
         private static void EnsureResolverRegistered()
         {
             if (_resolver_registered) return;
-            _resolver_registered = true;
-            NativeLibrary.SetDllImportResolver(typeof(TDengine).Assembly, (libraryName, assembly, searchPath) =>
+            lock (_init_lock)
             {
-                if (libraryName != "taos") return IntPtr.Zero;
-
-                // If user specified a directory, try loading from there first
-                if (!string.IsNullOrEmpty(_nativeLibraryPath))
+                if (_resolver_registered) return;
+                NativeLibrary.SetDllImportResolver(typeof(TDengine).Assembly, (libraryName, assembly, searchPath) =>
                 {
-                    string platformLib = GetPlatformLibraryFileName();
-                    string fullPath = Path.Combine(_nativeLibraryPath, platformLib);
-                    if (File.Exists(fullPath) && NativeLibrary.TryLoad(fullPath, out IntPtr handle))
+                    if (libraryName != "taos") return IntPtr.Zero;
+
+                    // If user specified a directory, try loading from there first
+                    if (!string.IsNullOrEmpty(_nativeLibraryPath))
                     {
-                        return handle;
+                        string platformLib = GetPlatformLibraryFileName();
+                        string fullPath = Path.Combine(_nativeLibraryPath, platformLib);
+                        if (File.Exists(fullPath) && NativeLibrary.TryLoad(fullPath, out IntPtr handle))
+                        {
+                            return handle;
+                        }
                     }
-                }
 
-                // Fall back to OS system search path (let the default resolver handle it)
-                if (NativeLibrary.TryLoad("taos", assembly, searchPath, out IntPtr systemHandle))
-                {
-                    return systemHandle;
-                }
+                    // Fall back to OS system search path (let the default resolver handle it)
+                    if (NativeLibrary.TryLoad("taos", assembly, searchPath, out IntPtr systemHandle))
+                    {
+                        return systemHandle;
+                    }
 
-                return IntPtr.Zero;
-            });
+                    return IntPtr.Zero;
+                });
+                _resolver_registered = true;
+            }
         }
 
         private static string GetPlatformLibraryFileName()
@@ -76,8 +81,11 @@ namespace IoTSharp.Data.Taos.Protocols
 
         public void InitTaos(string configdir, int shell_activity_timer, string locale, string charset)
         {
-            if (_dll_isloaded == false)
+            if (_dll_isloaded) return;
+            lock (_init_lock)
             {
+                if (_dll_isloaded) return;
+
                 // Register the native library resolver before any P/Invoke call
                 EnsureResolverRegistered();
 
