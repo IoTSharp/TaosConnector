@@ -5,7 +5,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
     public class WSQueryRsp : WSActionRsp
     {
 
-        public int req_id { get; set; }
+        public long req_id { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -13,7 +13,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         /// <summary>
         /// 
         /// </summary>
-        public int id { get; set; }
+        public long id { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -33,11 +33,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         /// <summary>
         /// 
         /// </summary>
-        public List<int> fields_types { get; set; }
+        public List<byte> fields_types { get; set; }
         /// <summary>
         /// 
         /// </summary>
-        public List<int> fields_lengths { get; set; }
+        public List<long> fields_lengths { get; set; }
         public int precision { get; set; }
     }
 

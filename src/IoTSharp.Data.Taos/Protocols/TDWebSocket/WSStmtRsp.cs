@@ -2,9 +2,9 @@
 {
     public class WSStmtRsp : WSActionRsp
     {
-        public int req_id { get; set; }
-        public int timing { get; set; }
-        public int stmt_id { get; set; }
+        public long req_id { get; set; }
+        public long timing { get; set; }
+        public long stmt_id { get; set; }
     }
     public class WSStmtExecRsp : WSStmtRsp
     {

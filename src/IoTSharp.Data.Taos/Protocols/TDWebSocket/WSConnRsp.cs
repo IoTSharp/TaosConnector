@@ -2,9 +2,11 @@
 {
     public class WSConnRsp : WSActionRsp
     {
-        public int req_id { get; set; }
+        public long req_id { get; set; }
 
-        public int timing { get; set; }
+        public long timing { get; set; }
+
+        public string version { get; set; }
     }
 
 

@@ -346,11 +346,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 
         private static string JsonSerialize<T>(T obj)
         {
-#if NET46_OR_GREATER || NETSTANDARD2_0_OR_GREATER
             return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
-#else
-            return System.Text.Json.JsonSerializer.Serialize(obj);
-#endif
         }
 
         public string GetClientVersion()
