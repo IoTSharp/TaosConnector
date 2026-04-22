@@ -77,7 +77,7 @@ namespace IoTSharp.Data.Taos
                     break;
                 case TaosConnectionStringBuilder.Protocol_Native:
                 default:
-                    taos = new TaosNative();
+                    taos = new TaosNative(ConnectionStringBuilder?.NativeLibraryPath ?? string.Empty);
                     break;
             }
             taos.InitTaos(configdir, shell_activity_timer, locale, charset);
