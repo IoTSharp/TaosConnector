@@ -1,7 +1,6 @@
 ﻿// Copyright (c)  maikebing All rights reserved.
 //// Licensed under the MIT License, See License.txt in the project root for license information.
 
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,9 +18,6 @@ using System.Collections;
 using IoTSharp.Data.Taos.Protocols;
 using IoTSharp.Data.Taos.Protocols.TDRESTful;
 using IoTSharp.Data.Taos.Protocols.TDWebSocket;
-#if NETCOREAPP
-using System.Text.Json.Nodes;
-#endif
 namespace IoTSharp.Data.Taos
 {
     /// <summary>
@@ -389,103 +385,6 @@ namespace IoTSharp.Data.Taos
             var ds = CreateCommand(_sql).ExecuteReader().ToObject<DatabaseSchema>();
             return (bool)(ds?.Any(d => d.name == databaseName));
         }
-        /// <summary>
-        /// 使用 TSDB_SML_LINE_PROTOCOL 协议
-        /// </summary>
-        /// <param name="lines">
-        /// 示例:
-        ///     "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
-        ///     "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
-        ///     "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
-        ///     "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
-        /// </param>
-        /// <param name="precision"></param>
-        /// <returns>返回数量</returns>
-        public int ExecuteLineBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
-            CreateCommand().ExecuteLineBulkInsert(lines, precision);
-
-#if NETCOREAPP
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
-        /// </summary>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(RecordData data) =>
-            CreateCommand().ExecuteLineBulkInsert(data);
-
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
-        /// </summary>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(IEnumerable<RecordData> data) =>
-            CreateCommand().ExecuteLineBulkInsert(data);
-
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
-        /// </summary>
-        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(IEnumerable<RecordData> data, RecordSettings settings) =>
-            CreateCommand().ExecuteLineBulkInsert(data, settings);
-
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
-        /// </summary>
-        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
-        /// <param name="precision">时间精度 </param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision) =>
-            CreateCommand().ExecuteLineBulkInsert(data, precision);
-
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
-        /// </summary>
-        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
-        /// <param name="precision">时间精度 </param>
-        /// <param name="settings">RecordSettings配置，请参考 InfluxDB的用法。</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision, RecordSettings settings) =>
-            CreateCommand().ExecuteLineBulkInsert(data, precision, settings);
-#endif
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
-        /// </summary>
-        /// <param name="array">对象数组， 在.Net6/7中会使用 System.Text.Json序列化，其他情况下使用Newtonsoft.Json序列化</param>
-        /// <param name="precision">时间精度 默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert<T>(IEnumerable<T> array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
-            CreateCommand().ExecuteJsonBulkInsert(array, precision);
-
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
-        /// </summary>
-        /// <param name="array"> Json数组  </param>
-        /// <param name="precision">时间精度 默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(JArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
-            CreateCommand().ExecuteJsonBulkInsert(array, precision);
-
-#if NETCOREAPP
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
-        /// </summary>
-        /// <param name="array"> Json数组  </param>
-        /// <param name="precision">时间精度，默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteBulkInsert(JsonArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
-            CreateCommand().ExecuteJsonBulkInsert(array, precision);
-#endif
-        /// <summary>
-        /// 使用Schemales的 TSDB_SML_TELNET_PROTOCOL 将数据插入TDengine
-        /// </summary>
-        /// <param name="array">字符串数据</param>
-        /// <param name="precision">时间精度</param>
-        /// <returns>返回数量</returns>
-        public int ExecuteTelnetBulkInsert(string[] array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED) =>
-            CreateCommand().ExecuteTelnetBulkInsert(array, precision);
-
-
-
-
 
         private class AggregateContext<T>
         {

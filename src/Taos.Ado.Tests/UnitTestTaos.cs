@@ -158,7 +158,7 @@ namespace Taos.Ado.Tests
             string[] lines = {
                 $"ws_meters,location=Beijing,groupid=1 current=11.8,voltage=221 {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
             };
-            var result = connection.ExecuteLineBulkInsert(lines);
+            var result = connection.CreateCommand().ExecuteLineBulkInsert(lines);
             Assert.Equal(lines.Length, result);
         }
 

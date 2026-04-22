@@ -25,7 +25,7 @@ namespace Example
                     lines.Add(line);
                 }
                connection.ChangeDatabase("meters");
-                connection.ExecuteLineBulkInsert(lines.ToArray(), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MICRO_SECONDS);
+                connection.CreateCommand().ExecuteLineBulkInsert(lines.ToArray(), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MICRO_SECONDS);
                 using var command = connection.CreateCommand();
                 command.CommandText = "select * from meters limit 1000000";
                 var reader = command.ExecuteReader();

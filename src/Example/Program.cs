@@ -135,7 +135,7 @@ namespace TaosADODemo
                         string.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
                 };
 
-                    int result = connection.ExecuteLineBulkInsert(lines);
+                    int result = connection.CreateCommand().ExecuteLineBulkInsert(lines);
                     Console.WriteLine($"行插入 {result}");
                     if (result != lines.Length)
                     {
@@ -582,7 +582,7 @@ namespace TaosADODemo
             AddTag(tags, "t10", "你好", "nchar");
             payload.Add("tags", tags);
 
-            int resultjson3 = connection.ExecuteBulkInsert(new JArray(payload));
+            int resultjson3 = connection.CreateCommand().ExecuteJsonBulkInsert(new JArray(payload));
             Console.WriteLine($"行插入 {resultjson3}");
             if (resultjson3 != 1)
             {
@@ -616,7 +616,7 @@ namespace TaosADODemo
                     { "t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>" }
                 };
             jo.Add("tags", tags1);
-            int resultjson2 = connection.ExecuteBulkInsert(new JsonArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
+            int resultjson2 = connection.CreateCommand().ExecuteJsonBulkInsert(new JsonArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
             Console.WriteLine($"行插入 {resultjson2}");
 
         }
@@ -637,7 +637,7 @@ namespace TaosADODemo
                     { "t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>" }
                 };
             jo.Add("tags", tags1);
-            int resultjson2 = connection.ExecuteBulkInsert(new JArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
+            int resultjson2 = connection.CreateCommand().ExecuteJsonBulkInsert(new JArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
             Console.WriteLine($"行插入 {resultjson2}");
         }
 
@@ -656,7 +656,7 @@ namespace TaosADODemo
                     +"}"
                 +"}"
             };
-            int resultjson = connection.ExecuteBulkInsert(JArray.FromObject(jsonStr.Select(j => JObject.Parse(j)).ToArray()));
+            int resultjson = connection.CreateCommand().ExecuteJsonBulkInsert(JArray.FromObject(jsonStr.Select(j => JObject.Parse(j)).ToArray()));
             Console.WriteLine($"Json插入{resultjson}");
         }
 
@@ -672,7 +672,7 @@ namespace TaosADODemo
 
             try
             {
-                int result = connection.ExecuteLineBulkInsert(lines);
+                int result = connection.CreateCommand().ExecuteLineBulkInsert(lines);
                 Console.WriteLine($"行插入 {result}");
                 if (result != lines.Length)
                 {
@@ -696,7 +696,7 @@ namespace TaosADODemo
                 "meters.voltage 1648432611249 221 location=California.LosAngeles groupid=3",
                 "meters.voltage 1648432611250 217 location=California.LosAngeles groupid=3",
             };
-            int result = connection.ExecuteTelnetBulkInsert(lines);
+            int result = connection.CreateCommand().ExecuteTelnetBulkInsert(lines);
             Console.WriteLine($"行插入 {result}");
             if (result != lines.Length)
             {
@@ -713,7 +713,7 @@ namespace TaosADODemo
         {
             var rec = RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
                  .Field("current", 12.1).Field("voltage", 234.0).Field("phase", 0.33);
-            int result = connection.ExecuteBulkInsert(rec);
+            int result = connection.CreateCommand().ExecuteLineBulkInsert(rec);
             Console.WriteLine($"行插入 {result}");
             if (result != 1)
             {
