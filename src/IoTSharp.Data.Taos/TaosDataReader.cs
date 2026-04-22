@@ -152,7 +152,7 @@ namespace IoTSharp.Data.Taos
         {
             if (!disposed)
             {
-                if (!disposing)
+                if (disposing)
                 {
                     _command.DataReader = null;
 
@@ -163,6 +163,7 @@ namespace IoTSharp.Data.Taos
                 }
                 disposed = true;
             }
+            base.Dispose(disposing);
         }
 
         /// <summary>
