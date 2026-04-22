@@ -450,6 +450,7 @@ namespace IoTSharp.Data.Taos.Protocols
                                     break;
 
                                 default:
+                                    _bind = TaosMultiBind.MultiBindBinary(new string[] { tp.Value as string });
                                     break;
                             }
                         }
@@ -477,13 +478,13 @@ namespace IoTSharp.Data.Taos.Protocols
                 {
                     _tags.Add(_bind);
                 }
-                else if (tp.ParameterName.StartsWith("@"))
-                {
-                    _datas.Add(_bind);
-                }
                 else if (tp.ParameterName.StartsWith("#"))
                 {
                     _subtablename = tp.Value as string;
+                }
+                else
+                {
+                    _datas.Add(_bind);
                 }
             }
         }
