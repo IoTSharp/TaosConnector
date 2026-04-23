@@ -419,7 +419,144 @@ namespace IoTSharp.Data.Taos
             //unsubscribe 
         }
 
+        // ----------------------------------------------------------------
+        //  Schemaless / Bulk-insert helpers
+        // ----------------------------------------------------------------
 
+        private void EnsureConnectionOpen([System.Runtime.CompilerServices.CallerMemberName] string caller = "")
+        {
+            if (_connection?.State != ConnectionState.Open)
+                throw new InvalidOperationException($"CallRequiresOpenConnection:{caller}");
+        }
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol (TSDB_SML_LINE_PROTOCOL) 批量写入数据。
+        /// </summary>
+        /// <param name="lines">Line-protocol 格式的字符串数组</param>
+        /// <param name="precision">时间精度，默认毫秒</param>
+        /// <returns>写入的行数</returns>
+        public int ExecuteLineBulkInsert(
+            string[] lines,
+            TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            EnsureConnectionOpen();
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
+        }
+
+        /// <summary>
+        /// 使用 OpenTSDB Telnet Protocol (TSDB_SML_TELNET_PROTOCOL) 批量写入数据。
+        /// </summary>
+        /// <param name="lines">Telnet-protocol 格式的字符串数组</param>
+        /// <param name="precision">时间精度，默认 NOT_CONFIGURED</param>
+        /// <returns>写入的行数</returns>
+        public int ExecuteTelnetBulkInsert(
+            string[] lines,
+            TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED)
+        {
+            EnsureConnectionOpen();
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_TELNET_PROTOCOL, precision);
+        }
+
+        /// <summary>
+        /// 使用 JSON Protocol (TSDB_SML_JSON_PROTOCOL) 批量写入 Newtonsoft JArray 数据。
+        /// </summary>
+        public int ExecuteJsonBulkInsert(
+            Newtonsoft.Json.Linq.JArray array,
+            TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            EnsureConnectionOpen();
+            var lines = array.Children().Select(x => x.ToString()).ToArray();
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+
+        /// <summary>
+        /// 使用 JSON Protocol (TSDB_SML_JSON_PROTOCOL) 批量写入对象集合（自动序列化为 JSON）。
+        /// </summary>
+        public int ExecuteJsonBulkInsert<T>(
+            IEnumerable<T> array,
+            TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            EnsureConnectionOpen();
+#if NETCOREAPP
+            var lines = array.Select(x => System.Text.Json.JsonSerializer.Serialize(x)).ToArray();
+#else
+            var lines = array.Select(x => Newtonsoft.Json.JsonConvert.SerializeObject(x)).ToArray();
+#endif
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+
+#if NETCOREAPP
+        /// <summary>
+        /// 使用 JSON Protocol (TSDB_SML_JSON_PROTOCOL) 批量写入 System.Text.Json JsonArray 数据。
+        /// </summary>
+        public int ExecuteJsonBulkInsert(
+            System.Text.Json.Nodes.JsonArray array,
+            TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            EnsureConnectionOpen();
+            var lines = array.Where(x => x != null).Select(x => x!.ToString()).ToArray();
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol 批量写入单条 <see cref="RecordData"/> 数据。
+        /// </summary>
+        public int ExecuteLineBulkInsert(RecordData data)
+            => ExecuteLineBulkInsert(new RecordData[] { data }, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol 批量写入 <see cref="RecordData"/> 集合。
+        /// </summary>
+        public int ExecuteLineBulkInsert(IEnumerable<RecordData> data)
+            => ExecuteLineBulkInsert(data, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol 批量写入 <see cref="RecordData"/> 集合（指定设置）。
+        /// </summary>
+        public int ExecuteLineBulkInsert(IEnumerable<RecordData> data, RecordSettings settings)
+            => ExecuteLineBulkInsert(data, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, settings);
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol 批量写入 <see cref="RecordData"/> 集合（指定精度）。
+        /// </summary>
+        public int ExecuteLineBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision)
+            => ExecuteLineBulkInsert(data, precision, null);
+
+        /// <summary>
+        /// 使用 InfluxDB Line Protocol 批量写入 <see cref="RecordData"/> 集合（指定精度和设置）。
+        /// </summary>
+        public int ExecuteLineBulkInsert(
+            IEnumerable<RecordData> data,
+            TDengineSchemalessPrecision precision,
+            RecordSettings settings)
+        {
+            EnsureConnectionOpen();
+            Arguments.CheckNotEmpty(data, nameof(data));
+            if (precision == TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED)
+            {
+                switch (data.First().Precision)
+                {
+                    case TimePrecision.Ms:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS;
+                        break;
+                    case TimePrecision.S:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_SECONDS;
+                        break;
+                    case TimePrecision.Us:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MICRO_SECONDS;
+                        break;
+                    case TimePrecision.Ns:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NANO_SECONDS;
+                        break;
+                    default:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS;
+                        break;
+                }
+            }
+            var lines = data.Select(rd => rd.ToLineProtocol(settings)).ToArray();
+            return _taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
+        }
+#endif
     }
 
 }

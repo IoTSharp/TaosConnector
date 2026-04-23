@@ -25,27 +25,29 @@ namespace TDengineDriver
 
     public enum TDengineDataType
     {
-        TSDB_DATA_TYPE_NULL = 0,     // 1 bytes
-        TSDB_DATA_TYPE_BOOL = 1,     // 1 bytes
-        TSDB_DATA_TYPE_TINYINT = 2,  // 1 bytes
-        TSDB_DATA_TYPE_SMALLINT = 3, // 2 bytes
-        TSDB_DATA_TYPE_INT = 4,      // 4 bytes
-        TSDB_DATA_TYPE_BIGINT = 5,   // 8 bytes
-        TSDB_DATA_TYPE_FLOAT = 6,    // 4 bytes
-        TSDB_DATA_TYPE_DOUBLE = 7,   // 8 bytes
-        TSDB_DATA_TYPE_VARCHAR = 8,   // string
-        TSDB_DATA_TYPE_TIMESTAMP = 9,// 8 bytes
-        TSDB_DATA_TYPE_NCHAR = 10,   // unicode string
-        TSDB_DATA_TYPE_UTINYINT = 11,// 1 byte
+        TSDB_DATA_TYPE_NULL = 0,      // 1 bytes
+        TSDB_DATA_TYPE_BOOL = 1,      // 1 bytes
+        TSDB_DATA_TYPE_TINYINT = 2,   // 1 byte
+        TSDB_DATA_TYPE_SMALLINT = 3,  // 2 bytes
+        TSDB_DATA_TYPE_INT = 4,       // 4 bytes
+        TSDB_DATA_TYPE_BIGINT = 5,    // 8 bytes
+        TSDB_DATA_TYPE_FLOAT = 6,     // 4 bytes
+        TSDB_DATA_TYPE_DOUBLE = 7,    // 8 bytes
+        TSDB_DATA_TYPE_VARCHAR = 8,   // string, alias for varchar
+        TSDB_DATA_TYPE_TIMESTAMP = 9, // 8 bytes
+        TSDB_DATA_TYPE_NCHAR = 10,    // unicode string
+        TSDB_DATA_TYPE_UTINYINT = 11, // 1 byte
         TSDB_DATA_TYPE_USMALLINT = 12,// 2 bytes
-        TSDB_DATA_TYPE_UINT = 13,    // 4 bytes
-        TSDB_DATA_TYPE_UBIGINT = 14,   // 8 bytes
-        TSDB_DATA_TYPE_JSON = 15,  //4096 bytes 
-        TSDB_DATA_TYPE_VARBINARY = 16, // binary
-        TSDB_DATA_TYPE_DECIMAL = 17, // decimal
-        TSDB_DATA_TYPE_BLOB = 18, // binary
+        TSDB_DATA_TYPE_UINT = 13,     // 4 bytes
+        TSDB_DATA_TYPE_UBIGINT = 14,  // 8 bytes
+        TSDB_DATA_TYPE_JSON = 15,     // json string
+        TSDB_DATA_TYPE_VARBINARY = 16,// binary
+        TSDB_DATA_TYPE_DECIMAL = 17,  // decimal
+        TSDB_DATA_TYPE_BLOB = 18,     // binary
         TSDB_DATA_TYPE_MEDIUMBLOB = 19,
-        TSDB_DATA_TYPE_MAX = 20
+        TSDB_DATA_TYPE_GEOMETRY = 20, // geometry
+        TSDB_DATA_TYPE_DECIMAL64 = 21,// decimal64
+        TSDB_DATA_TYPE_MAX = 22
     }
 
     public enum TSDB_TIME_PRECISION : int
@@ -61,7 +63,9 @@ namespace TDengineDriver
         TSDB_OPTION_CHARSET = 1,
         TSDB_OPTION_TIMEZONE = 2,
         TSDB_OPTION_CONFIGDIR = 3,
-        TSDB_OPTION_SHELL_ACTIVITY_TIMER = 4
+        TSDB_OPTION_SHELL_ACTIVITY_TIMER = 4,
+        TSDB_OPTION_USE_ADAPTER = 5,
+        TSDB_OPTION_DRIVER = 6
     }
     public enum TDengineSchemalessProtocol
     {
@@ -90,28 +94,6 @@ namespace TDengineDriver
 
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
-    public struct TAOS_BIND
-    {
-        // column type
-        public int buffer_type;
-        // one column value           
-        public IntPtr buffer;
-        // unused               
-        public Int32 buffer_length;
-        // actual value length in buffer   
-        public IntPtr length;
-        // indicates the column value is null or not      
-        public IntPtr is_null;
-        // unused            
-        public int is_unsigned;
-        // unused           
-        public IntPtr error;
-        public Int64 u;
-        public uint allocated;
-    }
-
-
     [StructLayout(LayoutKind.Sequential)]
     public struct TAOS_MULTI_BIND
     {
@@ -121,20 +103,18 @@ namespace TDengineDriver
         // array, one or more lines column value
         public IntPtr buffer;
 
-        //length of element in TAOS_MULTI_BIND.buffer (for binary and nchar it is the longest element's length)
+        // length of element in TAOS_MULTI_BIND.buffer (for binary and nchar it is the longest element's length)
         public ulong buffer_length;
 
-        //array, actual data length for each value
+        // array, actual data length for each value (int32_t*)
         public IntPtr length;
 
-        //array, indicates each column value is null or not
+        // array, indicates each column value is null or not
         public IntPtr is_null;
 
         // line number, or the values number in buffer 
         public int num;
     }
-
-
 
     /// <summary>
     /// User defined callback function for interface "QueryAsync()"
@@ -163,23 +143,12 @@ namespace TDengineDriver
     /// or the number of records is negative (the query fails).</param>
     public delegate void FetchRowAsyncCallback(IntPtr param, IntPtr taoRes, int numOfRows);
 
-    /// <summary>
-    /// In asynchronous mode, the prototype of the callback function.
-    /// </summary>
-    /// <param name="subscribe">Subscription object return by <see cref = "Subscribe"> </param>
-    /// <param name="tasRes"> Query retrieve result set. (Note there may be no record in the result set.)</param>
-    /// <param name="param"> Additional parameters supplied by the client when taos_subscribe is called.</param>
-    /// <param name="code"> Error code.</param>
-    public delegate void SubscribeCallback(IntPtr subscribe, IntPtr tasRes, IntPtr param, int code);
-    public delegate void StreamOpenCallback(IntPtr param, IntPtr taosRes, IntPtr taosRow);
-    public delegate void StreamOpenCallback2(IntPtr ptr);
-
     public class TDengine
     {
         public const int TSDB_CODE_SUCCESS = 0;
 
         [DllImport("taos", EntryPoint = "taos_init", CallingConvention = CallingConvention.Cdecl)]
-        static extern public void Init();
+        static extern public int Init();
 
         [DllImport("taos", EntryPoint = "taos_cleanup", CallingConvention = CallingConvention.Cdecl)]
         static extern public void Cleanup();
@@ -563,132 +532,9 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_fetch_rows_a", CallingConvention = CallingConvention.Cdecl)]
         static extern public void FetchRowAsync(IntPtr taoRes, FetchRowAsyncCallback fq, IntPtr param);
 
-        // Subscribe
-
-        /// <summary>
-        /// This function is used for start subscription service.
-        /// </summary>
-        /// <param name="taos"> taos connection return by <see cref = "Connect"></param>
-        /// <param name="restart">If the subscription is already exists, to decide whether to
-        /// start over or continue with previous subscription.</param>
-        /// <param name="topic"> The name of the subscription.(This is the unique identification of the subscription).</param>
-        /// <param name="sql">The subscribe statement(select only).Only query original data and in positive time sequence.</param>
-        /// <param name="fq">The callback function when the query result is received.</param>
-        /// <param name="param"> Additional parameter when calling callback function. System API will pass it to
-        /// callback function without any operations.It is only used when calling asynchronously,
-        /// and this parameter should be passed to NULL when calling synchronously</param>
-        /// <param name="interval">Polling period in milliseconds. During asynchronous call, the callback function will be
-        /// called periodically according to this parameter; In order to avoid affecting system
-        /// performance, it is not recommended to set this parameter too small; When calling synchronously,
-        /// if the interval between two calls to taos_consume is less than this period, the API will block
-        /// until the interval exceeds this period.</param>
-        /// <returns>Return null for failure, return subscribe object for success.</returns>
-        [DllImport("taos", EntryPoint = "taos_subscribe", CallingConvention = CallingConvention.Cdecl)]
-        static extern private IntPtr Subscribe(IntPtr taos, int restart, string topic, string sql, SubscribeCallback fq, IntPtr param, int interval);
-        static public IntPtr Subscribe(IntPtr taos, bool restart, string topic, string sql, SubscribeCallback fq, IntPtr param, int interval)
-        {
-            if (taos == IntPtr.Zero)
-            {
-                Console.WriteLine("taos connect is null,subscribe failed");
-                throw new Exception("taos connect is null");
-            }
-            else
-            {
-                IntPtr subPtr = Subscribe(taos, restart == true ? 1 : 0, topic, sql, fq, param, interval);
-                return subPtr;
-            }
-        }
-
-        /// <summary>
-        /// Only synchronous mode, this function is used to get the result of subscription.
-        /// If the interval between two calls to taos_consume is less than the polling
-        /// cycle of the subscription, the API will block until the interval exceeds this
-        /// cycle. If a new record arrives in the database, the API will return the latest
-        /// record, otherwise it will return an empty result set with no records.
-        /// If the return value is NULL, it indicates a system error.
-        /// </summary>
-        /// <param name="subscribe"> Subscription object return by <see cref = "Subscribe">. </param>
-        /// <returns></returns>
-        [DllImport("taos", EntryPoint = "taos_consume", CallingConvention = CallingConvention.Cdecl)]
-        static extern private IntPtr TaosConsume(IntPtr subscribe);
-        static public IntPtr Consume(IntPtr subscribe)
-        {
-            IntPtr res = IntPtr.Zero;
-            if (subscribe == IntPtr.Zero)
-            {
-                Console.WriteLine("Object subscribe is null,please subscribe first.");
-                throw new Exception("Object subscribe is null");
-            }
-            else
-            {
-                res = TaosConsume(subscribe);
-            }
-            return res;
-        }
-
-        /// <summary>
-        /// Unsubscribe.
-        /// </summary>
-        /// <param name="subscribe"> Subscription object return by <see cref = "Subscribe">.</param>
-        /// <param name="keep"> If it is not 0, the API will keep the progress of subscription,
-        /// and the  and the subsequent call to taos_subscribe can continue
-        /// based on this progress; otherwise, the progress information will
-        /// be deleted and the data can only be read again.
-        ///  </param>
-        [DllImport("taos", EntryPoint = "taos_unsubscribe", CallingConvention = CallingConvention.Cdecl)]
-        static extern private void Unsubscribe(IntPtr subscribe, int keep);
-        static public void Unsubscribe(IntPtr subscribe, bool keep)
-        {
-            if (subscribe == IntPtr.Zero)
-            {
-                Console.WriteLine("subscribe is null, close Unsubscribe failed");
-                throw new Exception("Object subscribe is null");
-            }
-            else
-            {
-                Unsubscribe(subscribe, keep == true ? 1 : 0);
-                Console.WriteLine("Unsubscribe success.");
-            }
-
-        }
-        // Stream
-
-        /// <summary>
-        /// Used to open an stream, which can do continuous query.
-        /// </summary>
-        /// <param name="taos"> taos connection return by <see cref = "Connect"></param>
-        /// <param name="sql"> Query statement( query only)</param>
-        /// <param name="fp"> User defined callback.</param>
-        /// <param name="stime"> The time when stream computing starts. If it is 0, it means starting from now.
-        /// If it is not zero, it means starting from the specified time (the number of
-        /// milliseconds from 1970/1/1 UTC time).
-        /// </param>
-        /// <param name="param">First parameter provide by application for callback usage.
-        /// While callback,this parameter is provided to the application.</param>
-        /// <param name="callback2">The second callback function which will be called when the continuous query 
-        /// stop automatically.</param>
-        /// <returns> Return null indicate creation failed, not null for success.</returns>
-        [DllImport("taos", EntryPoint = "taos_open_stream", CallingConvention = CallingConvention.Cdecl)]
-        static extern public IntPtr OpenStream(IntPtr taos, string sql, StreamOpenCallback fp, Int64 stime, IntPtr param, StreamOpenCallback2 callback2);
-
-
-        /// <summary>
-        /// Used too stop data flow.
-        /// Remember to stop data flow when you stopped steam computing.
-        /// </summary>
-        /// <param name="stream"> Value returned by <see cref = "OpenStream"></param>
-        [DllImport("taos", EntryPoint = "taos_close_stream", CallingConvention = CallingConvention.Cdecl)]
-        static extern public void CloseStream(IntPtr stream);
-
-
-
-        //schemaless API 
+        // schemaless API 
         [DllImport("taos", SetLastError = true, EntryPoint = "taos_schemaless_insert", CallingConvention = CallingConvention.Cdecl)]
         static extern internal IntPtr SchemalessInsert(IntPtr taos, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] lines, int numLines, int protocol, int precision);
-   
-
-       
-        
 
     }
 }

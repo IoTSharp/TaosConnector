@@ -18,8 +18,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
     internal partial class TaosWebSocket : ITaosProtocol
     {
         private ClientWebSocket _ws_client = null;
-        private ClientWebSocket _stmt_client = null;
-        private ClientWebSocket _schemaless_client = null;
         private string _databaseName;
         private TaosConnectionStringBuilder _builder;
 
@@ -41,13 +39,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public void Close(TaosConnectionStringBuilder connectionStringBuilder)
         {
-#if NET46
-
-#else
             _ws_client?.Dispose();
-            _stmt_client?.Dispose();
-            _schemaless_client?.Dispose();
-#endif
         }
 
         public TaosDataReader ExecuteReader(CommandBehavior behavior, TaosCommand command)
@@ -101,42 +93,42 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         {
             TaosWSResult wSResult = new TaosWSResult(); ;
             var pms = _parameters.Value;
-            var req_id = 0;
-            var _init = WSExecute<WSStmtRsp>(_stmt_client, "init", new { req_id });
+            long req_id = 0;
+            var _init = WSExecute<WSStmtRsp>(_ws_client, "init", new { req_id });
             var stmt_id = _init.stmt_id;
 
             if (_init.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _init.code, Error = _init.message });
             req_id++;
             var sql = StatementObject.ResolveCommandText(_commandText);
-            var _prepare = WSExecute<WSStmtRsp>(_stmt_client, "prepare", new { req_id, stmt_id, sql = sql.CommandText });
+            var _prepare = WSExecute<WSStmtRsp>(_ws_client, "prepare", new { req_id, stmt_id, sql = sql.CommandText });
             if (_prepare.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _prepare.code, Error = _prepare.message });
 
             BindParameters(pms, out var columns, out var tags, out var subtablename);
             req_id++;
             if (!string.IsNullOrEmpty(subtablename))
             {
-                var _set_table_name = WSExecute<WSStmtRsp>(_stmt_client, "set_table_name", new { req_id, stmt_id, name = subtablename });
+                var _set_table_name = WSExecute<WSStmtRsp>(_ws_client, "set_table_name", new { req_id, stmt_id, name = subtablename });
                 if (_set_table_name.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_table_name.code, Error = _set_table_name.message });
                 req_id++;
             }
             if (tags.Count > 0)
             {
-                var _set_tags = WSExecute<WSStmtRsp>(_stmt_client, "set_tags", new { req_id, stmt_id, tags });
+                var _set_tags = WSExecute<WSStmtRsp>(_ws_client, "set_tags", new { req_id, stmt_id, tags });
                 if (_set_tags.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_tags.code, Error = _set_tags.message });
                 req_id++;
             }
-            var _bind = WSExecute<WSStmtRsp>(_stmt_client, "bind", new { req_id, stmt_id, columns });
+            var _bind = WSExecute<WSStmtRsp>(_ws_client, "bind", new { req_id, stmt_id, columns });
             if (_bind.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _bind.code, Error = _bind.message });
             req_id++;
 
-            var _add_batch = WSExecute<WSStmtRsp>(_stmt_client, "add_batch", new { req_id, stmt_id });
+            var _add_batch = WSExecute<WSStmtRsp>(_ws_client, "add_batch", new { req_id, stmt_id });
             if (_add_batch.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _add_batch.code, Error = _add_batch.message });
-            var _exec = WSExecute<WSStmtExecRsp>(_stmt_client, "exec", new { req_id, stmt_id });
+            var _exec = WSExecute<WSStmtExecRsp>(_ws_client, "exec", new { req_id, stmt_id });
             wSResult = new TaosWSResult() { StmtExec = _exec };
             if (_exec.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _exec.code, Error = _exec.message });
             req_id++;
             //https://github.com/taosdata/taosadapter/issues/129#issuecomment-1369468337
-            WSExecute(_stmt_client, "close", new { req_id, stmt_id });
+            WSExecute(_ws_client, "close", new { req_id, stmt_id });
             return wSResult;
         }
 
@@ -346,8 +338,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             return _result;
         }
 
-        //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws_test.go
-        //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws.go#L152
+        //https://github.com/taosdata/taosadapter/blob/main/controller/ws/ws/ws.go
         private static volatile int _reqid = 0;
 
         private TaosWSResult Execute(string _commandText)
@@ -425,32 +416,22 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         {
             _builder = connectionStringBuilder;
             var builder = connectionStringBuilder;
-            string _timez = string.IsNullOrEmpty(builder.TimeZone) ? "" : $"?tz={builder.TimeZone}";
             _ws_client = new ClientWebSocket();
-            _stmt_client = new ClientWebSocket();
-            var ws_ok = _open_ws(builder);
-            var stmt_ok = _open_stmt(builder);
-            return ws_ok && stmt_ok;
-        }
-
-        private bool _open_stmt(TaosConnectionStringBuilder builder)
-        {
-            _open__ws_client(builder, _stmt_client, "/rest/stmt");
-            return _ws_conn(builder, _stmt_client);
-        }
-
-        private bool _open_ws(TaosConnectionStringBuilder builder)
-        {
-            _open__ws_client(builder, _ws_client, "/rest/ws");
+            _open__ws_client(builder, _ws_client, "/ws");
             return _ws_conn(builder, _ws_client);
         }
 
         private bool _ws_conn(TaosConnectionStringBuilder builder, ClientWebSocket _client)
         {
-            var rep = WSExecute<WSConnRsp, WSConnReq>(_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+            var connReq = new WSActionReq<WSConnReq>()
+            {
+                Action = "conn",
+                Args = new WSConnReq() { user = builder.Username, password = builder.Password, db = builder.DataBase, req_id = 0 }
+            };
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_client, connReq);
             if (rep.code == 899)
             {
-                rep = WSExecute<WSConnRsp, WSConnReq>(_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+                rep = WSExecute<WSConnRsp, WSConnReq>(_client, connReq);
             }
             if (rep.code != 0)
             {
@@ -468,12 +449,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             return IntPtr.Zero;
         }
 
-        private void _open__schemaless(TaosConnectionStringBuilder builder)
-        {
-            if (_schemaless_client == null) _schemaless_client = new ClientWebSocket();
-            _open__ws_client(builder, _schemaless_client, "/rest/schemaless");
-            WSExecute(_schemaless_client, "conn", new { user = builder.Username, password = builder.Password });
-        }
         private void _open__ws_client(TaosConnectionStringBuilder builder, ClientWebSocket _client, string path)
         {
             var url = $"ws://{builder.DataSource}:{builder.Port}{path}";
@@ -494,12 +469,12 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision _precision)
         {
-            if (_schemaless_client == null || _schemaless_client.State != WebSocketState.Open)
+            if (_ws_client == null || _ws_client.State != WebSocketState.Open)
             {
-                _open__schemaless(_builder);
+                Open(_builder);
             }
             string precision = SchemalessPrecisionToString(_precision);
-            var _insert = WSExecute<WSSchemalessRsp>(_schemaless_client, "insert", new
+            var _insert = WSExecute<WSSchemalessRsp>(_ws_client, "insert", new
             {
                 db = _builder.DataBase,
                 protocol = (int)protocol,

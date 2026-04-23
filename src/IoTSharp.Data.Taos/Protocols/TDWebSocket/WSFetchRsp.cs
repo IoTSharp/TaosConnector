@@ -4,11 +4,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
     public class WSFetchRsp : WSActionRsp
     {
-        public int req_id { get; set; }
+        public long req_id { get; set; }
 
-        public int timing { get; set; }
+        public long timing { get; set; }
 
-        public int id { get; set; }
+        public long id { get; set; }
 
         public bool completed { get; set; }
 

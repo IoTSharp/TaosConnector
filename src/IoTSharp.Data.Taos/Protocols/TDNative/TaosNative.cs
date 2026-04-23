@@ -7,6 +7,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
@@ -17,19 +18,78 @@ namespace IoTSharp.Data.Taos.Protocols
     {
         private static readonly ConcurrentDictionary<string, ConcurrentTaosQueue> g_pool = new ConcurrentDictionary<string, ConcurrentTaosQueue>();
         private ConcurrentTaosQueue _queue = null;
+        private static readonly object _init_lock = new object();
         private static bool _dll_isloaded = false;
+        private static bool _resolver_registered = false;
+        private static string _nativeLibraryPath = string.Empty;
         private readonly DateTime _dt1970;
 
-        public TaosNative()
+        public TaosNative() : this(string.Empty)
+        {
+        }
+
+        public TaosNative(string nativeLibraryPath)
         {
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            if (!string.IsNullOrEmpty(nativeLibraryPath))
+            {
+                _nativeLibraryPath = nativeLibraryPath;
+            }
+        }
+
+        private static void EnsureResolverRegistered()
+        {
+            if (_resolver_registered) return;
+            lock (_init_lock)
+            {
+                if (_resolver_registered) return;
+                NativeLibrary.SetDllImportResolver(typeof(TDengine).Assembly, (libraryName, assembly, searchPath) =>
+                {
+                    if (libraryName != "taos") return IntPtr.Zero;
+
+                    // If user specified a directory, try loading from there first
+                    if (!string.IsNullOrEmpty(_nativeLibraryPath))
+                    {
+                        string platformLib = GetPlatformLibraryFileName();
+                        string fullPath = Path.Combine(_nativeLibraryPath, platformLib);
+                        if (File.Exists(fullPath) && NativeLibrary.TryLoad(fullPath, out IntPtr handle))
+                        {
+                            return handle;
+                        }
+                    }
+
+                    // Fall back to OS system search path (let the default resolver handle it)
+                    if (NativeLibrary.TryLoad("taos", assembly, searchPath, out IntPtr systemHandle))
+                    {
+                        return systemHandle;
+                    }
+
+                    return IntPtr.Zero;
+                });
+                _resolver_registered = true;
+            }
+        }
+
+        private static string GetPlatformLibraryFileName()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return "taos.dll";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return "libtaos.dylib";
+            return "libtaos.so";
         }
 
         public void InitTaos(string configdir, int shell_activity_timer, string locale, string charset)
         {
-            if (_dll_isloaded == false)
+            if (_dll_isloaded) return;
+            lock (_init_lock)
             {
-                if (!string.IsNullOrEmpty(configdir) && !string.IsNullOrEmpty(configdir) && File.Exists(Path.Combine(configdir, "taos.cfg")))
+                if (_dll_isloaded) return;
+
+                // Register the native library resolver before any P/Invoke call
+                EnsureResolverRegistered();
+
+                if (!string.IsNullOrEmpty(configdir) && File.Exists(Path.Combine(configdir, "taos.cfg")))
                 {
                     TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configdir);
                 }
@@ -43,21 +103,10 @@ namespace IoTSharp.Data.Taos.Protocols
                 }
                 else
                 {
-                    var configDir = "C:/TDengine/cfg";
-#if NET5_0_OR_GREATER
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    {
-                        configDir = "/etc/taos";
-                    }
-                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        configDir = "C:/TDengine/cfg";
-                    }
-#else
-                    configDir = "C:/TDengine/cfg";
-#endif
-                    var syscfg = new FileInfo(Path.Combine(configDir, "taos.cfg"));
-                    if (syscfg.Exists)
+                    string configDir = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                        ? "/etc/taos"
+                        : "C:/TDengine/cfg";
+                    if (File.Exists(Path.Combine(configDir, "taos.cfg")))
                     {
                         TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configDir);
                     }

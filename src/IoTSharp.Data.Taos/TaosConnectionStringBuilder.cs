@@ -33,6 +33,7 @@ namespace IoTSharp.Data.Taos
         public const string Protocol_Native = "Native";
         public const string Protocol_WebSocket = "WebSocket";
         private const string TokenKeyword = "Token";
+        private const string NativeLibraryPathKeyword = "NativeLibraryPath";
         private enum Keywords
         {
             DataSource,
@@ -45,8 +46,8 @@ namespace IoTSharp.Data.Taos
             TimeOut,
             Protocol,
             TimeZone,
-            Token
-
+            Token,
+            NativeLibraryPath
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
@@ -63,10 +64,11 @@ namespace IoTSharp.Data.Taos
         private string _protocol = Protocol_Native;
         private string _timezone = string.Empty;
         private string _token = string.Empty;
+        private string _nativeLibraryPath = string.Empty;
 
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[11];
+            var validKeywords = new string[12];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -78,9 +80,10 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.Protocol] = ProtocolKeyword;
             validKeywords[(int)Keywords.TimeZone] = TimeZoneKeyword;
             validKeywords[(int)Keywords.Token] = TokenKeyword;
+            validKeywords[(int)Keywords.NativeLibraryPath] = NativeLibraryPathKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(11, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(12, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -93,7 +96,8 @@ namespace IoTSharp.Data.Taos
                 [TimeOutKeyword] = Keywords.TimeOut,
                 [ProtocolKeyword] = Keywords.Protocol,
                 [TimeZoneKeyword] = Keywords.TimeZone,
-                [TokenKeyword] = Keywords.Token
+                [TokenKeyword] = Keywords.Token,
+                [NativeLibraryPathKeyword] = Keywords.NativeLibraryPath
             };
         }
 
@@ -114,9 +118,9 @@ namespace IoTSharp.Data.Taos
             => ConnectionString = connectionString;
 
         /// <summary>
-        ///   Êý¾Ý¿â·þÎñÆ÷µØÖ·
+        ///   ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
         /// </summary>
-        /// <value>Êý¾Ý¿â·þÎñÆ÷µØÖ·</value>
+        /// <value>ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·</value>
         public virtual string DataSource
         {
             get => _dataSource;
@@ -124,7 +128,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// ÓÃ»§Ãû
+        /// ï¿½Ã»ï¿½ï¿½ï¿½
         /// </summary>
         public virtual string Username
         {
@@ -133,7 +137,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// ×Ö·û±àÂë
+        /// ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public virtual string Charset
         {
@@ -142,7 +146,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Êý¾Ý¿âÃÜÂë
+        /// ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public virtual string Password
         {
@@ -157,7 +161,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ïß³Ì³Ø´óÐ¡ Ä¿Ç°½ö¶Ô libtaos ¶¯Ì¬¿âÓÐÐ§¡£
+        /// ï¿½ß³Ì³Ø´ï¿½Ð¡ Ä¿Ç°ï¿½ï¿½ï¿½ï¿½ libtaos ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
         /// </summary>
         public virtual int PoolSize
         {
@@ -166,7 +170,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ð­ÒéÀàÐÍ£¬ Ä¬ÈÏÎª¿ÕÊ±Îª Native
+        /// Ð­ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ Ä¬ï¿½ï¿½Îªï¿½ï¿½Ê±Îª Native
         /// </summary>
         public virtual string Protocol
         {
@@ -175,7 +179,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ä¬ÈÏÎª¿ÕÊ±Îª Asia/Shanghai
+        /// Ä¬ï¿½ï¿½Îªï¿½ï¿½Ê±Îª Asia/Shanghai
         /// </summary>
         public virtual string TimeZone
         {
@@ -187,6 +191,17 @@ namespace IoTSharp.Data.Taos
         {
             get => _token;
             set => base[TokenKeyword] = _token = value;
+        }
+
+        /// <summary>
+        /// Directory path where the native taos library (taos.dll / libtaos.so / libtaos.dylib) is installed.
+        /// If empty, the library is loaded from the system search path.
+        /// Only used when Protocol=Native.
+        /// </summary>
+        public virtual string NativeLibraryPath
+        {
+            get => _nativeLibraryPath;
+            set => base[NativeLibraryPathKeyword] = _nativeLibraryPath = value;
         }
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
@@ -214,7 +229,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ö¸¶¨Òª·ÃÎÊµÄÊý¾Ý¿â¡£
+        /// Ö¸ï¿½ï¿½Òªï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½Ý¿â¡£
         /// </summary>
         public virtual string DataBase
         {
@@ -225,7 +240,7 @@ namespace IoTSharp.Data.Taos
         internal bool ForceDatabaseName { get; set; } = false;
 
         /// <summary>
-        /// Á¬½Ó³¬Ê±Ê±³¤
+        /// ï¿½ï¿½ï¿½Ó³ï¿½Ê±Ê±ï¿½ï¿½
         /// </summary>
         public int ConnectionTimeout
         {
@@ -293,6 +308,9 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.Token:
                         Token = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.NativeLibraryPath:
+                        NativeLibraryPath = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -435,6 +453,8 @@ namespace IoTSharp.Data.Taos
                     return TimeZone;
                 case Keywords.Token:
                     return Token;
+                case Keywords.NativeLibraryPath:
+                    return NativeLibraryPath;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -492,6 +512,9 @@ namespace IoTSharp.Data.Taos
                 case Keywords.Token:
                     _token = string.Empty;
                     return;
+                case Keywords.NativeLibraryPath:
+                    _nativeLibraryPath = string.Empty;
+                    return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;
@@ -499,7 +522,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ê¹ÓÃRESTful·ÃÎÊÊý¾Ý¿â
+        /// Ê¹ï¿½ï¿½RESTfulï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
         /// </summary>
         /// <returns></returns>
         public TaosConnectionStringBuilder UseRESTful()
@@ -510,7 +533,7 @@ namespace IoTSharp.Data.Taos
         }
 
         /// <summary>
-        /// Ê¹ÓÃWebSocket·ÃÎÊÊý¾Ý¿â
+        /// Ê¹ï¿½ï¿½WebSocketï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
         /// </summary>
         public TaosConnectionStringBuilder UseWebSocket()
         {
@@ -528,7 +551,7 @@ namespace IoTSharp.Data.Taos
             return this;
         }
         /// <summary>
-        /// Ê¹ÓÃlibtaos¶¯Ì¬¿â·ÃÎÊÊý¾Ý¿â
+        /// Ê¹ï¿½ï¿½libtaosï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
         /// </summary>
         /// <returns></returns>
         public TaosConnectionStringBuilder UseNative()
