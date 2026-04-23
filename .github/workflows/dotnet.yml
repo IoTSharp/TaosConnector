@@ -90,38 +90,3 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  docker:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: read
-      packages: write
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Extract version from tag
-      id: version
-      run: |
-        echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        echo "OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build and push Docker image (Example)
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        file: src/Example/Dockerfile
-        push: true
-        tags: |
-          ghcr.io/${{ steps.version.outputs.OWNER }}/taosconnector-example:${{ steps.version.outputs.VERSION }}
-          ghcr.io/${{ steps.version.outputs.OWNER }}/taosconnector-example:latest
