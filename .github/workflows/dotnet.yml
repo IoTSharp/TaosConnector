@@ -59,6 +59,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore EFCore.Taos.sln
 
+    - name: Build
+      run: dotnet build -c Release --no-restore EFCore.Taos.sln
+
     - name: Extract version from tag
       id: version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -68,6 +71,7 @@ jobs:
         dotnet pack src/IoTSharp.Data.Taos/IoTSharp.Data.Taos.csproj \
           -c Release \
           --no-restore \
+          --no-build \
           -p:Version=${{ steps.version.outputs.VERSION }} \
           -o ./nupkg
 
@@ -85,3 +89,4 @@ jobs:
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
