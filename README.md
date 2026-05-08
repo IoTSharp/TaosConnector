@@ -1,5 +1,32 @@
 # IoTSharp.Data.Taos
 
+> [!TIP]
+>
+>   🚀现在我们强烈推荐.Net 10 编写的 时序数据库 [SonnetDB](https://github.com/IoTSharp/SonnetDB)
+>
+> SonnetDB 是一个面向 IoT、工业数据、可观测性与实时分析场景的时序数据库。它同时提供：
+>
+> 🧩 进程内嵌入式引擎（低延迟、易集成，[in-proc API](https://github.com/IoTSharp/SonnetDB/blob/main/docs/embedded-api.md)）
+>
+> 🌐 HTTP 服务端（Admin UI、Help、认证和权限）
+>
+> 🔌 多语言连接器（C、Go、Rust、Java、Python、VB6、PureBasic）
+>
+> 🛠️ 标准 ADO.NET 与 CLI 工具链、AI Copilot 智能数据分析和查询维护
+>
+> ⚡ 高吞吐写入：支持 SQL、Line Protocol、JSON、Bulk fast-path。
+>
+> 🧠 丰富 SQL 能力：聚合、窗口函数、预测函数、控制函数（PID）和地理空间分析。
+>
+> 🗺️ GeoSpatial：`GEOPOINT`、轨迹长度/重心/速度统计、围栏查询、GeoJSON 输出。
+>
+> 🔐 服务端控制面：用户、数据库、授权、Token 生命周期管理。
+>
+> 
+
+
+
+
 ## 项目简介
 
 
@@ -47,7 +74,7 @@ IoTSharp.EntityFrameworkCore.Taos  已经废弃。
 ---
 
 [![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/iotsharp/entityframeworkcore-taos)
-[![License](https://img.shields.io/github/license/iotsharp/EntityFrameworkCore.Taos.svg)](https://github.com/IoTSharp/EntityFrameworkCore.Taos/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/iotsharp/EntityFrameworkCore.Taos.svg)](https://github.com/IoTSharp/TaosConnector/blob/master/LICENSE)
 
 
 

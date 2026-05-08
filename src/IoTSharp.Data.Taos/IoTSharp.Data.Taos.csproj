@@ -20,19 +20,20 @@
 		<PackageTags>Taos;Data;ADO.NET;Data O/RM;;TDengine;IoTSharp</PackageTags>
 		<Authors>Yanhong Ma</Authors>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageProjectUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/IoTSharp/TaosConnector</PackageProjectUrl>
 		<PackageIconUrl></PackageIconUrl>
-		<RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
+		<RepositoryUrl>https://github.com/IoTSharp/TaosConnector</RepositoryUrl>
 		<PackageReleaseNotes>
 			IoTSharp.Data.Taos  是一个TDengine 的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
 		</PackageReleaseNotes>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<Copyright>Copyright © 2019-2025 IoTSharp All rights reserved.</Copyright>
-		<Version>1.0.1</Version>
+		<Copyright>Copyright © 2019-2026 IoTSharp All rights reserved.</Copyright>
+		<Version>3.4.0</Version>
 		<LangVersion>latest</LangVersion>
 		<Platforms>AnyCPU</Platforms>
 		<PackageIcon>logo.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -45,6 +46,10 @@
 		<None Include="..\..\LICENSE">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\..\README.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
 

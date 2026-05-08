@@ -3,17 +3,18 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.1</Version>
+    <Version>3.4.0</Version>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/IoTSharp/TaosConnector</PackageProjectUrl>
     <PackageIcon>logo.png</PackageIcon>
-    <RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
+    <RepositoryUrl>https://github.com/IoTSharp/TaosConnector</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>taos;HealthChecks;TDengine</PackageTags>
-    <Copyright>Copyright 2019-2023 IoTSharp</Copyright>
+    <Copyright>Copyright 2019-2026 IoTSharp</Copyright>
     <Description>提供涛思时序数据库的健康检查</Description>
     <Authors>maikebing</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,10 @@
     <None Include="..\..\docs\logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
     <None Include="..\LICENSE">
       <Pack>True</Pack>
