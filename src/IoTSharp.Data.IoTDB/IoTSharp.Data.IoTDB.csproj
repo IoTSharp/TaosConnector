@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>IoTSharp.Data.IoTDB</AssemblyName>
+    <RootNamespace>IoTSharp.Data.IoTDB</RootNamespace>
+    <PackageId>IoTSharp.Data.IoTDB</PackageId>
+    <Description>IoTSharp ADO.NET and tree mapping helpers for Apache IoTDB.</Description>
+    <PackageTags>IoTDB;Apache;IoTSharp;ADO.NET;TimeSeries;Tree</PackageTags>
+    <Authors>IoTSharp</Authors>
+    <Version>1.0.0</Version>
+    <PackageProjectUrl>https://github.com/IoTSharp/TaosConnector</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/IoTSharp/TaosConnector</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Apache.IoTDB.Data" Version="2.0.11" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="\" />
+    <None Include="../../docs/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
